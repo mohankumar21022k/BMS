@@ -1,8 +1,9 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
-
-
+const dotenv = require('dotenv').config();
+const MONGODB_URI =
+`mongodb+srv://${process.env.MongoUser}:${process.env.MongoPass}@library.pblks.mongodb.net/${process.env.MongoDB}`;
 const bookRoute = require('./routes/books');
 
 const app = express();
@@ -35,7 +36,7 @@ app.use((error, req, res, next) => {
 
 //databaseConnection-MongoDB
 mongoose
-    .connect('mongodb+srv://root:root123@library.pblks.mongodb.net/?retryWrites=true&w=majority')
+    .connect(MONGODB_URI)
     .then(result => {
         app.listen(8055);
         console.log('Connected to your database at MongoDB')

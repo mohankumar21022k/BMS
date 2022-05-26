@@ -14,5 +14,8 @@
     "start": "nodemon app.js"
   },
   "author": "MohanKumarA",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "dotenv": "^16.0.1"
+  }
 }
