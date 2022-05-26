@@ -1,4 +1,5 @@
 const Book = require('../models/book');
+const { validationResult } = require('express-validator');
 
 //Fetching books
 exports.getBooks = async (req, res, next) => {
@@ -20,6 +21,10 @@ exports.getBooks = async (req, res, next) => {
 
 //Creating book 
 exports.createBook = async (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(422).json({message :errors.array()[0].msg})
+}
   const bookID = req.body.bookID;
   const title = req.body.title;
   const authors = req.body.authors;
@@ -81,9 +86,12 @@ exports.getBook = async (req, res, next) => {
   }
 };
 
-
 //Updating the book info
 exports.updateBook = async (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(422).json({message :errors.array()[0].msg})
+}
   const bookId = req.params.bookId;
   const bookID = req.body.bookID
   const title = req.body.title;
@@ -130,22 +138,20 @@ exports.updateBook = async (req, res, next) => {
 
 
 //Deleting Book from DB
-//Deleting but taking time
 exports.deleteBook = async (req, res, next) => {
   const bookId = req.params.bookId;
   try {
-    const book = await Book.findById(bookId);
-
+    const book = await Book.findByIdAndRemove(bookId);
     if (!book) {
-      const error = new Error('Could not find book.');
-      error.statusCode = 404;
-      throw error;
+      return res.status(404).json({ message: 'Book not found ' });
     }
-    const result = await Book.deleteOne(book);
-  } catch (err) {
+    res.status(201).json({ message: "book deleted successfully", name: book.title });
+  }
+  catch (err) {
     if (!err.statusCode) {
       err.statusCode = 500;
     }
     next(err);
   }
-};
+
+}
