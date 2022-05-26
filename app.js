@@ -8,6 +8,7 @@ const MONGODB_URI = `mongodb+srv://${process.env.MongoUser}:${process.env.MongoP
 
 //registering routes
 const bookRoute = require('./routes/books');
+const userRoute = require('./routes/users');
 
 //instance of express
 const app = express();
@@ -17,21 +18,22 @@ app.use(bodyParser.json());
 
 //routes using middleware
 app.use(bookRoute);
+app.use(userRoute);
 
 //error handling middleware
 app.use((error, req, res, next) => {
-    console.log(error);
-    const status = error.statusCode || 500;
-    const message = error.message;
-    const data = error.data;
-    res.status(status).json({ message: message });
+  console.log(error);
+  const status = error.statusCode || 500;
+  const message = error.message;
+  const data = error.data;
+  res.status(status).json({ message: message });
 });
 
 //databaseConnection-MongoDB
 mongoose
-    .connect(MONGODB_URI)
-    .then(result => {
-        app.listen(8055);
-        console.log('Connected to your database at MongoDB')
-    })
-    .catch(err => console.log(err));
+  .connect(MONGODB_URI)
+  .then(result => {
+    app.listen(8055);
+    console.log('Connected to your database at MongoDB')
+  })
+  .catch(err => console.log(err));

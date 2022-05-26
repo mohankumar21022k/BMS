@@ -33,21 +33,21 @@ exports.createBook = async (req, res, next) => {
   const publication_date = req.body.publication_date;
   const publisher = req.body.publisher;
   try {
-  const book = new Book({
-    bookID:bookID,
-    title: title,
-    authors: authors,
-    average_rating: average_rating,
-    isbn: isbn,
-    isbn13: isbn13,
-    language_code: language_code,
-    num_pages: num_pages,
-    ratings_count: ratings_count,
-    text_reviews_count: text_reviews_count,
-    publication_date: publication_date,
-    publisher: publisher,
-  })
-  
+    const book = new Book({
+      bookID: bookID,
+      title: title,
+      authors: authors,
+      average_rating: average_rating,
+      isbn: isbn,
+      isbn13: isbn13,
+      language_code: language_code,
+      num_pages: num_pages,
+      ratings_count: ratings_count,
+      text_reviews_count: text_reviews_count,
+      publication_date: publication_date,
+      publisher: publisher,
+    })
+
     await book.save();
     const books = await Book.find();
     res.status(201).json({
@@ -85,7 +85,7 @@ exports.getBook = async (req, res, next) => {
 //Updating the book info
 exports.updateBook = async (req, res, next) => {
   const bookId = req.params.bookId;
-  const bookID= req.body.bookID
+  const bookID = req.body.bookID
   const title = req.body.title;
   const authors = req.body.authors;
   const average_rating = req.body.average_rating;
@@ -110,7 +110,7 @@ exports.updateBook = async (req, res, next) => {
     book.authors = authors;
     book.average_rating = average_rating;
     book.isbn = isbn;
-    book.isbn13 = isbn13; 
+    book.isbn13 = isbn13;
     book.language_code = language_code;
     book.num_pages = num_pages;
     book.ratings_count = ratings_count;
@@ -120,7 +120,7 @@ exports.updateBook = async (req, res, next) => {
     const result = await book.save();
     res.status(200).json({ message: 'Post updated!', post: result });
   }
-   catch (err) {
+  catch (err) {
     if (!err.statusCode) {
       err.statusCode = 500;
     }
@@ -134,13 +134,14 @@ exports.updateBook = async (req, res, next) => {
 exports.deleteBook = async (req, res, next) => {
   const bookId = req.params.bookId;
   try {
-    const book = await Book.findByIdAndRemove(bookId);
+    const book = await Book.findById(bookId);
 
     if (!book) {
       const error = new Error('Could not find book.');
       error.statusCode = 404;
       throw error;
     }
+    const result = await Book.deleteOne(book);
   } catch (err) {
     if (!err.statusCode) {
       err.statusCode = 500;

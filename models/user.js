@@ -7,18 +7,32 @@ const userSchema = new Schema({
     type: String,
     required: true
   },
+
+
   email: {
     type: String,
     required: true
   },
+
+  //hashed password
   password: {
     type: String,
     required: true
   },
-  role:{
-    type:String,
-    required:true
+
+  //user/admin
+  role: {
+    type: String,
+    required: true
   },
+
+  // enable/disable
+  userAccess: {
+    type: Boolean,
+    required: true
+  },
+
+  //favourite books array
   fav: {
     books: [
       {
