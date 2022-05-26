@@ -2,28 +2,21 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv').config();
-const MONGODB_URI =
-`mongodb+srv://${process.env.MongoUser}:${process.env.MongoPass}@library.pblks.mongodb.net/${process.env.MongoDB}`;
+
+//protected connection string
+const MONGODB_URI = `mongodb+srv://${process.env.MongoUser}:${process.env.MongoPass}@library.pblks.mongodb.net/${process.env.MongoDB}`;
+
+//registering routes
 const bookRoute = require('./routes/books');
 
+//instance of express
 const app = express();
 
 //parsing the request body to json 
 app.use(bodyParser.json());
 
-//registering routes
+//routes using middleware
 app.use(bookRoute);
-
-//cors
-app.use((req, res, next) => {
-    res.setHeader('Access-Control-Allow-Origin', '*'); //specify certain domains/orgins ex)codepen.io, '*' is wildcard means all origins
-    res.setHeader(
-      'Access-Control-Allow-Methods',
-      'OPTIONS, GET, POST, PUT, PATCH, DELETE'
-    );
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    next();
-  });
 
 //error handling middleware
 app.use((error, req, res, next) => {
