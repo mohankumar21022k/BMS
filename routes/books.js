@@ -7,6 +7,9 @@ const auth = require('../middleware/authorize');
 //fetching all books
 router.get('/books', bookController.getBooks);
 
+//search 
+router.get('/book', bookController.searchBook);
+
 //creating book
 router.post('/book', auth,
     [body('isbn')

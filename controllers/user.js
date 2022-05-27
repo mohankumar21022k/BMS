@@ -64,27 +64,35 @@ exports.signUp = async (req, res, next) => {
 exports.login = async (req, res, next) => {
     const email = req.body.email;
     const password = req.body.password;
-    let loadedUser;
+    let currentUser;
     try {
         const user = await User.findOne({ email: email });
         if (!user) {
             return res.status(422).json({ message: 'User with this email Not Found! Try signing up' })
 
         }
-        loadedUser = user;
+        currentUser = user;
         const isEqual = await bcrypt.compare(password, user.password);
         if (!isEqual) {
             return res.status(422).json({ message: 'Password incorrect' })
         }
         const token = jwt.sign(
             {
-                email: loadedUser.email,
-                userId: loadedUser._id.toString()
+                email: currentUser.email,
+                userId: currentUser._id.toString(),
+                role: currentUser.role,
+                userAccess: currentUser.userAccess
             },
             'libapp005567',
             { expiresIn: '1h' }
         );
-        res.status(200).json({ token: token, userId: loadedUser._id.toString() });
+        res.status(200)
+            .json({
+                token: token,
+                userId: currentUser._id.toString(),
+                role: currentUser.role,
+                userAccess: currentUser.userAccess
+            });
     } catch (err) {
         if (!err.statusCode) {
             err.statusCode = 500;
@@ -117,6 +125,11 @@ exports.updateUser = async (req, res, next) => {
     if (!errors.isEmpty()) {
         return res.status(422).json({ message: errors.array()[0].msg })
     }
+    if (req.role !== "admin") {
+        const error = new Error('Updating privileges are granted only admins');
+        error.statusCode = 422;
+        throw error;
+    }
     const userId = req.params.userId;
     const name = req.body.name
     const password = req.body.password;
@@ -131,7 +144,7 @@ exports.updateUser = async (req, res, next) => {
             return res.status(422).json({ message: 'User Not Found' })
         }
         user.name = name;
-        user.email = email;
+
         user.password = hashedPw;
         user.role = role;
         user.userAccess = userAccess;
@@ -150,6 +163,12 @@ exports.updateUser = async (req, res, next) => {
 //User Deleting
 exports.deleteUser = async (req, res, next) => {
     const userId = req.params.userId;
+
+    if (req.role !== "admin") {
+        const error = new Error('Deleting privileges are granted only admins');
+        error.statusCode = 422;
+        throw error;
+    }
     try {
         const user = await User.findByIdAndRemove(userId);
         if (!user) {
@@ -165,3 +184,55 @@ exports.deleteUser = async (req, res, next) => {
     }
 
 }
+
+//fetching fav
+exports.getFav = async (req, res, next) => {
+    const user = await User.findById(req.userId);
+    user
+      .populate('fav.books.bookId')
+   
+      .then(user => {
+        const books = user.fav.books;
+        res.status(200).json({
+            books: books
+        });
+      })
+      .catch(err => {
+        const error = new Error(err);
+        error.httpStatusCode = 500;
+        return next(error);
+      });
+  };
+  
+  //adding book from fav
+  exports.postFav = async (req, res, next) => {
+    const user = await User.findById(req.userId);
+    const bookId = req.body.bookId;
+    Book.findById(bookId)
+      .then(book => {
+        return user.addToFav(book);
+      })
+      .then(result => {
+        console.log(result);
+      })
+      .catch(err => {
+        const error = new Error(err);
+        error.httpStatusCode = 500;
+        return next(error);
+      });
+  };
+  
+  //deleting book from fav
+  exports.postFavDeleteBook = (req, res, next) => {
+    const bookId = req.body.bookId;
+    user
+      .removeFromFav(bookId)
+      .then(result => {
+       console.log('book removed from favorites')
+      })
+      .catch(err => {
+        const error = new Error(err);
+        error.httpStatusCode = 500;
+        return next(error);
+      });
+  };

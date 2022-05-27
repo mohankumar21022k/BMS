@@ -32,7 +32,7 @@ router.post('/login', userController.login);
 router.get('/user/:userId', userController.getUser);
 
 //updating a particular user
-router.put('/user/:userId',auth,
+router.put('/user/:userId', auth,
     [body('name')
         .trim()
         .isAlpha()
@@ -48,7 +48,16 @@ router.put('/user/:userId',auth,
     ],
     userController.updateUser);
 
+//fetching favs
+router.get('/fav', auth, userController.getFav);
+
+//posting favs
+router.post('/fav', auth, userController.postFav);
+
+//deleting favs
+router.post('/fav-delete', auth, userController.postFavDeleteBook);
+
 //deleting a particular user
-router.delete('/user/:userId',auth, userController.deleteUser);
+router.delete('/user/:userId', auth, userController.deleteUser);
 
 module.exports = router;

@@ -3,20 +3,20 @@ const { validationResult } = require('express-validator');
 
 //Fetching books
 exports.getBooks = async (req, res, next) => {
- //pagination
+  //pagination
   const currentPage = req.query.page || 1;  //default page 1
-  const perPage = 8;    //8 books per apge
+  const perPage = 8;    //8 books per page
 
   try {
-    const totalItems = await Post.find().countDocuments();
+    const totalItems = await Book.find().countDocuments();
     const books = await Book.find()
-      .skip((currentPage - 1) * perPage)   
+      .skip((currentPage - 1) * perPage)
       .limit(perPage);;
 
     res.status(200).json({
       message: 'Fetched Books Successfully!!',
       books: books,
-      totalItems:totalItems
+      totalItems: totalItems
     });
   }
   catch (err) {
@@ -92,11 +92,30 @@ exports.getBook = async (req, res, next) => {
   }
 };
 
+
+exports.searchBook = async (req, res, next) => {
+  const filters = req.query;
+  const books = await Book.find();
+  const filteredBooks = books.filter((book) =>{
+    return (
+book.title.toLowerCase().includes(filters.title) ||
+book.authors.includes(filters.authors) ||
+book.isbn.toString().includes(filters.isbn) 
+)})
+    console.log(filters.authors);
+  res.status(200).json({ filteredBooks: filteredBooks});
+};
+
 //Updating the book info
 exports.updateBook = async (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(422).json({ message: errors.array()[0].msg })
+  }
+  if (req.role !== "admin") {
+    const error = new Error('Updating privileges are granted only admins');
+    error.statusCode = 422;
+    throw error;
   }
   const bookId = req.params.bookId;
   const bookID = req.body.bookID
@@ -144,6 +163,11 @@ exports.updateBook = async (req, res, next) => {
 //Deleting Book from DB
 exports.deleteBook = async (req, res, next) => {
   const bookId = req.params.bookId;
+  if (req.role !== "admin") {
+    const error = new Error('Deleting privileges are granted only admins');
+    error.statusCode = 422;
+    throw error;
+  }
   try {
     const book = await Book.findByIdAndRemove(bookId);
     if (!book) {
