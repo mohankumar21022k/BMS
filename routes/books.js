@@ -2,12 +2,13 @@ const express = require('express');
 const router = express.Router();
 const { body } = require('express-validator');
 const bookController = require('../controllers/book');
+const auth = require('../middleware/authorize');
 
 //fetching all books
 router.get('/books', bookController.getBooks);
 
 //creating book
-router.post('/book',
+router.post('/book', auth,
     [body('isbn')
         .trim()
         .isLength({ min: 9 })
@@ -45,7 +46,7 @@ router.post('/book',
 router.get('/book/:bookId', bookController.getBook);
 
 //updating a particular book
-router.put('/book/:bookId',
+router.put('/book/:bookId', auth,
     [body('isbn')
         .trim()
         .isLength({ min: 9 }),
@@ -74,6 +75,6 @@ router.put('/book/:bookId',
     bookController.updateBook);
 
 //deleting a particular book
-router.delete('/book/:bookId', bookController.deleteBook);
+router.delete('/book/:bookId', auth, bookController.deleteBook);
 
 module.exports = router;

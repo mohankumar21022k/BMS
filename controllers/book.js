@@ -3,12 +3,20 @@ const { validationResult } = require('express-validator');
 
 //Fetching books
 exports.getBooks = async (req, res, next) => {
+ //pagination
+  const currentPage = req.query.page || 1;  //default page 1
+  const perPage = 8;    //8 books per apge
+
   try {
-    const books = await Book.find();
+    const totalItems = await Post.find().countDocuments();
+    const books = await Book.find()
+      .skip((currentPage - 1) * perPage)   
+      .limit(perPage);;
 
     res.status(200).json({
       message: 'Fetched Books Successfully!!',
-      books: books
+      books: books,
+      totalItems:totalItems
     });
   }
   catch (err) {
@@ -23,8 +31,8 @@ exports.getBooks = async (req, res, next) => {
 exports.createBook = async (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(422).json({message :errors.array()[0].msg})
-}
+    return res.status(422).json({ message: errors.array()[0].msg })
+  }
   const bookID = req.body.bookID;
   const title = req.body.title;
   const authors = req.body.authors;
@@ -73,9 +81,7 @@ exports.getBook = async (req, res, next) => {
   try {
     const book = await Book.findById(bookId);
     if (!book) {
-      const error = new Error('Could not find Book.');
-      error.statusCode = 404;
-      throw error;
+      return res.status(422).json({ message: 'Book Not Found' })
     }
     res.status(200).json({ message: 'Book fetched.', book: book });
   } catch (err) {
@@ -90,8 +96,8 @@ exports.getBook = async (req, res, next) => {
 exports.updateBook = async (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(422).json({message :errors.array()[0].msg})
-}
+    return res.status(422).json({ message: errors.array()[0].msg })
+  }
   const bookId = req.params.bookId;
   const bookID = req.body.bookID
   const title = req.body.title;
@@ -109,9 +115,7 @@ exports.updateBook = async (req, res, next) => {
   try {
     const book = await Book.findById(bookId);
     if (!book) {
-      const error = new Error('Could not find Book.');
-      error.statusCode = 404;
-      throw error;
+      return res.status(422).json({ message: 'Book Not Found' })
     }
     book.bookID = bookID;
     book.title = title;
