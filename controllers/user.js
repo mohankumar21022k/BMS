@@ -8,10 +8,12 @@ const jwt = require('jsonwebtoken');
 exports.getUsers = async (req, res, next) => {
     try {
         const users = await User.find();
-        res.status(200).json({
-            message: 'Fetched Users Successfully!!',
-            users: users
-        });
+        res
+            .status(200)
+            .json({
+                message: 'Fetched Users Successfully!!',
+                users: users
+            });
     }
     catch (err) {
         if (!err.statusCode) {
@@ -25,7 +27,11 @@ exports.getUsers = async (req, res, next) => {
 exports.signUp = async (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-        return res.status(422).json({ message: errors.array()[0].msg })
+        return res
+            .status(422)
+            .json({
+                message: errors.array()[0].msg
+            })
     }
     const name = req.body.name;
     const email = req.body.email;
@@ -33,8 +39,11 @@ exports.signUp = async (req, res, next) => {
     try {
         const exUser = await User.findOne({ email: email });
         if (exUser) {
-            return res.status(200)
-                .json({ message: 'User with this email-id exists. Take Please try with different email-id' })
+            return res
+                .status(422)
+                .json({
+                    message: 'User with this email-id exists. Take Please try with different email-id'
+                })
         }
 
         const hashedPw = await bcrypt.hash(password, 12);
@@ -47,9 +56,12 @@ exports.signUp = async (req, res, next) => {
             fav: { books: [] }
         });
         await user.save();
-        res.status(201).json({
-            message: 'User created successfully!',
-        });
+        res.
+            status(201)
+            .json({
+                message: 'User created successfully!',
+                user: user
+            });
 
     }
     catch (err) {
@@ -69,13 +81,21 @@ exports.login = async (req, res, next) => {
     try {
         const user = await User.findOne({ email: email });
         if (!user) {
-            return res.status(422).json({ message: 'User with this email Not Found! Try signing up' })
+            return res
+                .status(422)
+                .json({
+                    message: 'User with this email Not Found! Try signing up'
+                })
 
         }
         currentUser = user;
         const isEqual = await bcrypt.compare(password, user.password);
         if (!isEqual) {
-            return res.status(422).json({ message: 'Password incorrect' })
+            return res
+                .status(422)
+                .json({
+                    message: 'Password incorrect'
+                })
         }
         const token = jwt.sign(
             {
@@ -87,7 +107,8 @@ exports.login = async (req, res, next) => {
             'libapp005567',
             { expiresIn: '1h' }
         );
-        res.status(200)
+        res
+            .status(200)
             .json({
                 token: token,
                 userId: currentUser._id.toString(),
@@ -108,10 +129,18 @@ exports.getUser = async (req, res, next) => {
     try {
         const user = await User.findById(userId);
         if (!user) {
-            return res.status(422).json({ message: 'User Not Found' })
+            return res
+                .status(404)
+                .json({
+                    message: 'User Not Found'
+                })
 
         }
-        res.status(200).json({ message: 'User fetched.', user: user });
+        res
+            .status(200)
+            .json({
+                message: 'User fetched!', user: user
+            });
     } catch (err) {
         if (!err.statusCode) {
             err.statusCode = 500;
@@ -122,14 +151,18 @@ exports.getUser = async (req, res, next) => {
 
 //Updating the user
 exports.updateUser = async (req, res, next) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return res.status(422).json({ message: errors.array()[0].msg })
-    }
     if (req.role !== "admin") {
         const error = new Error('Updating privileges are granted only admins');
         error.statusCode = 422;
         throw error;
+    }
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res
+            .status(422)
+            .json({
+                message: errors.array()[0].msg
+            })
     }
     const userId = req.params.userId;
     const name = req.body.name
@@ -142,7 +175,9 @@ exports.updateUser = async (req, res, next) => {
         const hashedPw = await bcrypt.hash(password, 12);
         const user = await User.findById(userId);
         if (!user) {
-            return res.status(422).json({ message: 'User Not Found' })
+            return res
+                .status(404)
+                .json({ message: 'User Not Found' })
         }
         user.name = name;
 
@@ -151,7 +186,11 @@ exports.updateUser = async (req, res, next) => {
         user.userAccess = userAccess;
         user.fav = fav;
         const result = await user.save();
-        res.status(200).json({ message: 'User Info updated!', user: result });
+        res
+            .status(200)
+            .json({
+                message: 'User Info updated!', user: result
+            });
     }
     catch (err) {
         if (!err.statusCode) {
@@ -173,9 +212,18 @@ exports.deleteUser = async (req, res, next) => {
     try {
         const user = await User.findByIdAndRemove(userId);
         if (!user) {
-            return res.status(404).json({ message: 'User not found ' });
+            return res
+                .status(404)
+                .json({
+                    message: 'User not found '
+                });
         }
-        res.status(201).json({ message: "User deleted successfully", name: user.userName });
+        res
+            .status(201)
+            .json({
+                message: "User deleted successfully!",
+                name: user.userName
+            });
     }
     catch (err) {
         if (!err.statusCode) {
@@ -193,9 +241,11 @@ exports.getFav = async (req, res, next) => {
 
         .then(user => {
             const books = user.fav.books;
-            res.status(200).json({
-                books: books
-            });
+            res
+                .status(200)
+                .json({
+                    books: books
+                });
         })
         .catch(err => {
             const error = new Error(err);
@@ -210,15 +260,17 @@ exports.postFav = async (req, res, next) => {
     const bookId = req.params.bookId;
     Book.findById(bookId)
         .then(book => {
-
             const dupfavBook = user.fav.books.find(currentBook => {
                 return currentBook.bookId.toString() === book._id.toString();
-              });
-              console.log(dupfavBook);
-              if(dupfavBook){
-return res.status(200).json({message:'book already in fav'})
-              }
-
+            });
+            console.log(dupfavBook);
+            if (dupfavBook) {
+                return res
+                    .status(422)
+                    .json({
+                        message: 'Book already in fav'
+                    })
+            }
             const updatedFavBooks = [...user.fav.books];
             updatedFavBooks.push({
                 bookId: book._id,
@@ -229,12 +281,14 @@ return res.status(200).json({message:'book already in fav'})
             user.fav = updatedFav;
             console.log(user.fav)
             return user.save();
-              
+
         }).then(result => {
             console.log(result);
-            return res.status(201).json({
-                message: 'Fav Added'
-            })
+            return res
+                .status(201)
+                .json({
+                    message: 'Added book to fav!'
+                })
         })
         .catch(err => {
             const error = new Error(err);
@@ -254,8 +308,11 @@ exports.postFavDeleteBook = async (req, res, next) => {
     user.fav.books = updatedFavBooks;
     return user.save()
         .then(result => {
-            return res.status(201).json({ message: 'book removed from favorites' })
-
+            return res
+                .status(201)
+                .json({
+                    message: 'Book removed from favorites!'
+                })
         })
         .catch(err => {
             const error = new Error(err);
