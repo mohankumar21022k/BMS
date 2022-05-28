@@ -52,10 +52,10 @@ router.put('/user/:userId', auth,
 router.get('/fav', auth, userController.getFav);
 
 //posting favs
-router.post('/fav', auth, userController.postFav);
+router.post('/fav/:bookId', auth, userController.postFav);
 
 //deleting favs
-router.post('/fav-delete', auth, userController.postFavDeleteBook);
+router.post('/fav-delete/:bookId', auth, userController.postFavDeleteBook);
 
 //deleting a particular user
 router.delete('/user/:userId', auth, userController.deleteUser);

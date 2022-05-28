@@ -1,3 +1,4 @@
+const Book = require('../models/book');
 const User = require('../models/user');
 const { validationResult } = require('express-validator');
 const bcrypt = require('bcryptjs');
@@ -182,57 +183,83 @@ exports.deleteUser = async (req, res, next) => {
         }
         next(err);
     }
-
 }
 
 //fetching fav
 exports.getFav = async (req, res, next) => {
     const user = await User.findById(req.userId);
     user
-      .populate('fav.books.bookId')
-   
-      .then(user => {
-        const books = user.fav.books;
-        res.status(200).json({
-            books: books
+        .populate('fav.books.bookId')
+
+        .then(user => {
+            const books = user.fav.books;
+            res.status(200).json({
+                books: books
+            });
+        })
+        .catch(err => {
+            const error = new Error(err);
+            error.httpStatusCode = 500;
+            return next(error);
         });
-      })
-      .catch(err => {
-        const error = new Error(err);
-        error.httpStatusCode = 500;
-        return next(error);
-      });
-  };
-  
-  //adding book from fav
-  exports.postFav = async (req, res, next) => {
+};
+
+//adding book to fav
+exports.postFav = async (req, res, next) => {
     const user = await User.findById(req.userId);
-    const bookId = req.body.bookId;
+    const bookId = req.params.bookId;
     Book.findById(bookId)
-      .then(book => {
-        return user.addToFav(book);
-      })
-      .then(result => {
-        console.log(result);
-      })
-      .catch(err => {
-        const error = new Error(err);
-        error.httpStatusCode = 500;
-        return next(error);
-      });
-  };
-  
-  //deleting book from fav
-  exports.postFavDeleteBook = (req, res, next) => {
-    const bookId = req.body.bookId;
-    user
-      .removeFromFav(bookId)
-      .then(result => {
-       console.log('book removed from favorites')
-      })
-      .catch(err => {
-        const error = new Error(err);
-        error.httpStatusCode = 500;
-        return next(error);
-      });
-  };
+        .then(book => {
+
+            const dupfavBook = user.fav.books.find(currentBook => {
+                return currentBook.bookId.toString() === book._id.toString();
+              });
+              console.log(dupfavBook);
+              if(dupfavBook){
+return res.status(200).json({message:'book already in fav'})
+              }
+
+            const updatedFavBooks = [...user.fav.books];
+            updatedFavBooks.push({
+                bookId: book._id,
+            });
+            const updatedFav = {
+                books: updatedFavBooks
+            };
+            user.fav = updatedFav;
+            console.log(user.fav)
+            return user.save();
+              
+        }).then(result => {
+            console.log(result);
+            return res.status(201).json({
+                message: 'Fav Added'
+            })
+        })
+        .catch(err => {
+            const error = new Error(err);
+            error.httpStatusCode = 500;
+            return next(error);
+        });
+};
+
+//deleting book from fav
+exports.postFavDeleteBook = async (req, res, next) => {
+    const user = await User.findById(req.userId);
+    const bookId = req.params.bookId;
+
+    const updatedFavBooks = user.fav.books.filter(item => {
+        return item.bookId.toString() !== bookId.toString();
+    });
+    user.fav.books = updatedFavBooks;
+    return user.save()
+        .then(result => {
+            return res.status(201).json({ message: 'book removed from favorites' })
+
+        })
+        .catch(err => {
+            const error = new Error(err);
+            error.httpStatusCode = 500;
+            return next(error);
+        });
+};

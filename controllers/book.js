@@ -6,12 +6,11 @@ exports.getBooks = async (req, res, next) => {
   //pagination
   const currentPage = req.query.page || 1;  //default page 1
   const perPage = 8;    //8 books per page
-
-  try {
+    try {
     const totalItems = await Book.find().countDocuments();
     const books = await Book.find()
       .skip((currentPage - 1) * perPage)
-      .limit(perPage);;
+      .limit(perPage);
 
     res.status(200).json({
       message: 'Fetched Books Successfully!!',
@@ -100,7 +99,7 @@ exports.searchBook = async (req, res, next) => {
     return (
 book.title.toLowerCase().includes(filters.title) ||
 book.authors.includes(filters.authors) ||
-book.isbn.toString().includes(filters.isbn) 
+book.isbn.toString().includes(filters.isbn)
 )})
     console.log(filters.authors);
   res.status(200).json({ filteredBooks: filteredBooks});
@@ -134,7 +133,7 @@ exports.updateBook = async (req, res, next) => {
   try {
     const book = await Book.findById(bookId);
     if (!book) {
-      return res.status(422).json({ message: 'Book Not Found' })
+      return res.status(404).json({ message: 'Book Not Found' })
     }
     book.bookID = bookID;
     book.title = title;
