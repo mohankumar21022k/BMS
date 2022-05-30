@@ -16,6 +16,8 @@ const app = express();
 //parsing the request body to json 
 app.use(bodyParser.json());
 
+app.use((req, res, next) => { res.status(404).json({ message: '404! Page Not Found' }) });
+
 //routes using middleware
 app.use(bookRoute);
 app.use(userRoute);

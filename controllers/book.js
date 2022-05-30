@@ -113,22 +113,22 @@ exports.getBook = async (req, res, next) => {
   }
 };
 
-
+//searching book
 exports.searchBook = async (req, res, next) => {
-  const filters = req.query;
-  const books = await Book.find();
-  const filteredBooks = books.filter((book) => {
-    return (
-      book.title.toLowerCase().includes(filters.title) ||
-      book.authors.includes(filters.authors) ||
-      book.isbn.toString().includes(filters.isbn)
-    )
-  })
-  console.log(filters.authors);
+  const filters = req.query.search;
+  const books = await Book.find({
+"$or":[
+{title:{$regex:filters,$options: 'i' }},
+{authors:{$regex:filters,$options: 'i' }},
+{isbn:{$regex:filters,$options: 'i' }},
+// {publication_date:{$regex:filters}},
+{publisher:{$regex:filters,$options: 'i' }}
+]
+  });
   res
     .status(200)
     .json({
-      filteredBooks: filteredBooks
+      filteredBooks: books
     });
 };
 
