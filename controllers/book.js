@@ -3,13 +3,24 @@ const { validationResult } = require('express-validator');
 
 //Fetching books
 exports.getBooks = async (req, res, next) => {
+  //pagination
+  const currentPage = req.query.page || 1;  //default page 1
+  const perPage = 8;    //8 books per page
   try {
-    const books = await Book.find();
+    const totalItems = await Book
+      .find()
+      .countDocuments();
+    const books = await Book.find()
+      .skip((currentPage - 1) * perPage)
+      .limit(perPage);
 
-    res.status(200).json({
-      message: 'Fetched Books Successfully!!',
-      books: books
-    });
+    res
+      .status(200)
+      .json({
+        message: 'Fetched Books Successfully!!',
+        books: books,
+        totalItems: totalItems
+      });
   }
   catch (err) {
     if (!err.statusCode) {
@@ -21,10 +32,19 @@ exports.getBooks = async (req, res, next) => {
 
 //Creating book 
 exports.createBook = async (req, res, next) => {
+  if (req.role !== "admin") {
+    const error = new Error('Adding book can be done by admins only');
+    error.statusCode = 422;
+    throw error;
+  }
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(422).json({message :errors.array()[0].msg})
-}
+    return res
+      .status(422)
+      .json({
+        message: errors.array()[0].msg
+      })
+  }
   const bookID = req.body.bookID;
   const title = req.body.title;
   const authors = req.body.authors;
@@ -57,7 +77,7 @@ exports.createBook = async (req, res, next) => {
     const books = await Book.find();
     res.status(201).json({
       message: 'Book Added successfully!',
-      books: books,
+      books: books
     });
   } catch (err) {
     if (!err.statusCode) {
@@ -73,11 +93,18 @@ exports.getBook = async (req, res, next) => {
   try {
     const book = await Book.findById(bookId);
     if (!book) {
-      const error = new Error('Could not find Book.');
-      error.statusCode = 404;
-      throw error;
+      return res
+        .status(404)
+        .json({
+          message: 'Book Not Found'
+        })
     }
-    res.status(200).json({ message: 'Book fetched.', book: book });
+    res
+      .status(200)
+      .json({
+        message: 'Book fetched!',
+        book: book
+      });
   } catch (err) {
     if (!err.statusCode) {
       err.statusCode = 500;
@@ -86,12 +113,40 @@ exports.getBook = async (req, res, next) => {
   }
 };
 
+//searching book
+exports.searchBook = async (req, res, next) => {
+  const filters = req.query.search;
+  const books = await Book.find({
+"$or":[
+{title:{$regex:filters,$options: 'i' }},
+{authors:{$regex:filters,$options: 'i' }},
+{isbn:{$regex:filters,$options: 'i' }},
+// {publication_date:{$regex:filters}},
+{publisher:{$regex:filters,$options: 'i' }}
+]
+  });
+  res
+    .status(200)
+    .json({
+      filteredBooks: books
+    });
+};
+
 //Updating the book info
 exports.updateBook = async (req, res, next) => {
+  if (req.role !== "admin") {
+    const error = new Error('Updating book can be done by admins only');
+    error.statusCode = 422;
+    throw error;
+  }
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(422).json({message :errors.array()[0].msg})
-}
+    return res
+      .status(422)
+      .json({
+        message: errors.array()[0].msg
+      })
+  }
   const bookId = req.params.bookId;
   const bookID = req.body.bookID
   const title = req.body.title;
@@ -109,9 +164,11 @@ exports.updateBook = async (req, res, next) => {
   try {
     const book = await Book.findById(bookId);
     if (!book) {
-      const error = new Error('Could not find Book.');
-      error.statusCode = 404;
-      throw error;
+      return res
+        .status(404)
+        .json({
+          message: 'Book Not Found'
+        })
     }
     book.bookID = bookID;
     book.title = title;
@@ -126,7 +183,12 @@ exports.updateBook = async (req, res, next) => {
     book.publication_date = publication_date;
     book.publisher = publisher;
     const result = await book.save();
-    res.status(200).json({ message: 'Post updated!', post: result });
+    res
+      .status(200)
+      .json({
+        message: 'Book updated!',
+        book: result
+      });
   }
   catch (err) {
     if (!err.statusCode) {
@@ -139,13 +201,28 @@ exports.updateBook = async (req, res, next) => {
 
 //Deleting Book from DB
 exports.deleteBook = async (req, res, next) => {
+
   const bookId = req.params.bookId;
+  if (req.role !== "admin") {
+    const error = new Error('Deleting privileges are granted to only admins!');
+    error.statusCode = 422;
+    throw error;
+  }
   try {
     const book = await Book.findByIdAndRemove(bookId);
     if (!book) {
-      return res.status(404).json({ message: 'Book not found ' });
+      return res
+        .status(404)
+        .json({
+          message: 'Book not found'
+        });
     }
-    res.status(201).json({ message: "book deleted successfully", name: book.title });
+    res
+      .status(201)
+      .json({
+        message: "Book deleted successfully!",
+        name: book.title
+      });
   }
   catch (err) {
     if (!err.statusCode) {

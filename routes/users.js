@@ -2,15 +2,13 @@ const express = require('express');
 const router = express.Router();
 const { body } = require('express-validator');
 const userController = require('../controllers/user');
-const User = require('../models/user')
+const auth = require('../middleware/authorize');
 
 //fetching all users
 router.get('/users', userController.getUsers);
 
-
-
 //signing Up
-router.post('/user',
+router.post('/signup',
     [body('email')
         .trim()
         .isEmail()
@@ -27,11 +25,14 @@ router.post('/user',
     ],
     userController.signUp);
 
+//Login
+router.post('/login', userController.login);
+
 //getting a particular user
 router.get('/user/:userId', userController.getUser);
 
 //updating a particular user
-router.put('/user/:userId',
+router.put('/user/:userId', auth,
     [body('name')
         .trim()
         .isAlpha()
@@ -47,7 +48,16 @@ router.put('/user/:userId',
     ],
     userController.updateUser);
 
+//fetching favs
+router.get('/fav', auth, userController.getFav);
+
+//posting favs
+router.post('/fav/:bookId', auth, userController.postFav);
+
+//deleting favs
+router.post('/fav-delete/:bookId', auth, userController.postFavDeleteBook);
+
 //deleting a particular user
-router.delete('/user/:userId', userController.deleteUser);
+router.delete('/user/:userId', auth, userController.deleteUser);
 
 module.exports = router;

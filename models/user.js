@@ -31,7 +31,7 @@ const userSchema = new Schema({
     required: true
   },
 
-  //favourite books array
+  //favourite books
   fav: {
     books: [
       {
